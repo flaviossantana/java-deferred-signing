@@ -15,7 +15,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.Base64;
 
-public class C4_09_DeferredSigning {
+public class DeferredSigning {
 
     public static final String SRC = "./src/test/resources/pdfs/doc-blank.pdf";
 
@@ -24,7 +24,7 @@ public class C4_09_DeferredSigning {
 
     public static final String CERTIFICADO_PEM = "encryption/certificado-digital.pem";
 
-    public static final String[] RESULT_FILES = new String[] {
+    protected static final String[] RESULT_FILES = new String[]{
             "doc-sig-ok.pdf"
     };
 
@@ -36,10 +36,10 @@ public class C4_09_DeferredSigning {
         Security.addProvider(providerBC);
 
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        InputStream inputStream = C4_09_DeferredSigning.class.getClassLoader().getResourceAsStream(CERTIFICADO_PEM);
+        InputStream inputStream = DeferredSigning.class.getClassLoader().getResourceAsStream(CERTIFICADO_PEM);
         Certificate[] certificate = new Certificate[] { cf.generateCertificate(inputStream) };
 
-        C4_09_DeferredSigning app = new C4_09_DeferredSigning();
+        DeferredSigning app = new DeferredSigning();
         app.emptySignature(SRC, TEMP, "sig", certificate);
         app.signDocument(TEMP, DEST + RESULT_FILES[0], "sig", certificate);
     }
@@ -74,7 +74,7 @@ public class C4_09_DeferredSigning {
         BouncyCastleDigest digest = new BouncyCastleDigest();
 
 
-        byte hash[] = DigestAlgorithms.digest(new FileInputStream(new File(dest)), digest.getMessageDigest("SHA256"));
+        byte[] hash = DigestAlgorithms.digest(new FileInputStream(new File(dest)), digest.getMessageDigest("SHA256"));
         String hashBase64 = Base64.getEncoder().encodeToString(hash);
 
         System.out.println("{\"hashBase64\": \""+hashBase64+"\"" + "}");
@@ -122,7 +122,7 @@ public class C4_09_DeferredSigning {
         }
 
         public void modifySigningDictionary(PdfDictionary signDic) {
-
+            // Do nothing because of X and Y.
         }
     }
 
