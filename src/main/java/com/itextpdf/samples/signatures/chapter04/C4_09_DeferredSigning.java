@@ -10,17 +10,18 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.Base64;
 
 public class C4_09_DeferredSigning {
-    public static final String DEST = "./target/signatures/";
 
     public static final String SRC = "./src/test/resources/pdfs/doc-blank.pdf";
+
+    public static final String DEST = "./target/signatures/";
     public static final String TEMP = "./target/signatures/doc-empty-sig.pdf";
+
     public static final String CERTIFICADO_PEM = "encryption/certificado-digital.pem";
 
     public static final String[] RESULT_FILES = new String[] {
@@ -40,7 +41,7 @@ public class C4_09_DeferredSigning {
 
         C4_09_DeferredSigning app = new C4_09_DeferredSigning();
         app.emptySignature(SRC, TEMP, "sig", certificate);
-        app.signDocument(TEMP, DEST + RESULT_FILES[0], "sig", null, certificate);
+        app.signDocument(TEMP, DEST + RESULT_FILES[0], "sig", certificate);
     }
 
     public void emptySignature(String src, String dest, String fieldname, Certificate[] certificate)
@@ -81,7 +82,7 @@ public class C4_09_DeferredSigning {
 
     }
 
-    public void signDocument(String docEmptySign, String dest, String fieldName, PrivateKey pk, Certificate[] chain)
+    public void signDocument(String docEmptySign, String dest, String fieldName, Certificate[] certificate)
             throws IOException, GeneralSecurityException {
 
         String assinarRaw = "TvOlsGFBOHKA07WXCHhKm2Z26rJW8p7TkGfBX65JCs1JrSXAy7Hhs5osrvTcxyEpBJWC/XgdlvPrdHaSUF19znsED+hr7zgrEQ33gsB4C0wf3PkZnzWewvFaf1X0UOPhiv8p6L7lMQ+i5i0BQTWEDyed7cpDH5W0BQjxegKHyHo6KIiTjUxBIkEe/A3QeCEUB6Giw09+Rgdu5y6PW1lPWO+EgRKuz6M8+KYRmVBmSpG3Sj5i/kTc9FR4cSSyLZAGpmJn6wWo4x8JjGkBFT5L+vjB24EBJjYeHr5SJzIhSGQiDwN3HMP9h+hfI2Pe0V2lDaEv9pOZIUfSRLpKrgdUog==";
@@ -89,10 +90,6 @@ public class C4_09_DeferredSigning {
 
         PdfReader reader = new PdfReader(docEmptySign);
         FileOutputStream os = new FileOutputStream(dest);
-
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("encryption/certificado-digital.pem");
-        Certificate[] certificate = new Certificate[] { cf.generateCertificate(inputStream) };
 
         BouncyCastleDigest digest = new BouncyCastleDigest();
         PdfPKCS7 sgn = new PdfPKCS7(null, certificate, "SHA256", null, digest, false);
@@ -109,7 +106,6 @@ public class C4_09_DeferredSigning {
 
         os.close();
         reader.close();
-        inputStream.close();
 
     }
 
