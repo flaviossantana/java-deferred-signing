@@ -52,8 +52,8 @@ public class DeferredSigning {
         Security.addProvider(providerBC);
 
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        InputStream inputStream = DeferredSigning.class.getClassLoader().getResourceAsStream(CERTIFICADO_PEM);
-        Certificate[] certificate = new Certificate[] { cf.generateCertificate(inputStream) };
+        InputStream certificadoPem = DeferredSigning.class.getClassLoader().getResourceAsStream(CERTIFICADO_PEM);
+        Certificate[] certificate = new Certificate[]{cf.generateCertificate(certificadoPem)};
 
         DeferredSigning app = new DeferredSigning();
         app.emptySignature(SRC, TEMP, "sig", certificate);
@@ -69,7 +69,9 @@ public class DeferredSigning {
         PdfSignatureAppearance appearance = signer.getSignatureAppearance();
         appearance
                 .setPageRect(new Rectangle(36, 36, 300, 100))
-                .setReason("FLAVIO SANTANA")
+                .setReasonCaption("Razão: ")
+                .setReason("INTEGRAÇÃO GOV BR")
+                .setLocationCaption("Orgão: ")
                 .setLocation("DETRAN GO")
                 .setPageNumber(1)
                 .setCertificate(certificate[0]);
@@ -105,26 +107,24 @@ public class DeferredSigning {
          * Assinatura digital SHA256-RSA codificada em Base64 na retornada do serviço:
          * https://assinatura-api.staging.iti.br/externo/v2/assinarRaw
          */
-        String assinarRaw = "Hn+cMEFu3il3g+hYRG2dQyzbzrHaDZDoRJm3kn/7X6kESnXUYi6JUcj7s+QhAhkK5K0UjQ+v9HsHabbrLk5/E3vSG3o6zNMVmtCVa2tLqj+d+FVyWnAh4eGQW643wF3RdjBMrDUoemu0WLzhq1qeI/6I9T7mmQzGJPZpo9T2xqgs1dlYGqzorPf422ZOS/0ghuoUEA9RQ6mXnK/aAqwhfi7k312YfCPIZMTWzascVGViMPiaeWA8aTv592+KhFpQM+Ehpq4j4hvBPcfw27oVW3SCVi50TEesZRraC4tSZGGGwvR6jPG/Z03PZ2k/FLBsE3xc0+PYkEQIZMNH5AoYTQ==";
+        String assinarRaw = "sFq2PCt5OIrICLEokDv+HrS3hvQPMERlWq/Lx6kipMm6Ti6VMU8vJEv8fd7XeU/7uLXV6z9ezk9HPtGKfMQBQPIzkechTAunbtxaMGSyr+qrxwyytktx4HsyzxcQIdIngMi3uz4PxnArr10bDZKB5WtmMBLoE3dZcNrzcefNkOcSbKSxwH76yImHip27pxAmuYWTSae9DqVEbaBYLjGWSJGflLTzUv2JZPPT4lCmyNxtpM3Q5Lyz5gzMDG9gDcGGsDVaf/0JUNE7VArH/nwR8Co8z3cADTfdstbC5ZcPmpOePSOjO53C6Gd07IQWy8doDQT80knHiXNJAzqXl17LGg==";
 
-        PdfReader reader = new PdfReader(docEmptySign);
-        FileOutputStream os = new FileOutputStream(dest);
+        try (PdfReader reader = new PdfReader(docEmptySign)) {
+            try (FileOutputStream os = new FileOutputStream(dest)) {
+                BouncyCastleDigest digest = new BouncyCastleDigest();
+                PdfPKCS7 sgn = new PdfPKCS7(null, certificate, "SHA256", null, digest, false);
 
-        BouncyCastleDigest digest = new BouncyCastleDigest();
-        PdfPKCS7 sgn = new PdfPKCS7(null, certificate, "SHA256", null, digest, false);
+                sgn.setExternalDigest(Base64.getDecoder().decode(assinarRaw.getBytes()), null, "RSA");
 
-        sgn.setExternalDigest(Base64.getDecoder().decode(assinarRaw.getBytes()), null, "RSA");
-
-        byte[] encodedPKCS7 = sgn.getEncodedPKCS7(null, PdfSigner.CryptoStandard.CMS, null, null, null);
+                byte[] encodedPKCS7 = sgn.getEncodedPKCS7(null, PdfSigner.CryptoStandard.CMS, null, null, null);
 
 
-        PdfSigner signer = new PdfSigner(reader, os, new StampingProperties());
+                PdfSigner signer = new PdfSigner(reader, os, new StampingProperties());
 
-        IExternalSignatureContainer external = new CustomExternalSignature(encodedPKCS7);
-        signer.signDeferred(signer.getDocument(), fieldName, os, external);
-
-        os.close();
-        reader.close();
+                IExternalSignatureContainer external = new CustomExternalSignature(encodedPKCS7);
+                signer.signDeferred(signer.getDocument(), fieldName, os, external);
+            }
+        }
 
     }
 
@@ -136,7 +136,7 @@ public class DeferredSigning {
             this.encodedSig = encodedSig;
         }
 
-        public byte[] sign(InputStream is) throws GeneralSecurityException {
+        public byte[] sign(InputStream is) {
             return this.encodedSig;
         }
 
@@ -147,7 +147,7 @@ public class DeferredSigning {
 
     public class PreSignatureContainer implements IExternalSignatureContainer {
         private PdfDictionary sigDic;
-        private byte hash[];
+        private byte[] hash;
 
         public PreSignatureContainer(PdfName filter, PdfName subFilter) {
             sigDic = new PdfDictionary();
@@ -175,7 +175,7 @@ public class DeferredSigning {
         }
 
         public byte[] getHash() {
-            return hash;
+            return this.hash;
         }
     }
 
