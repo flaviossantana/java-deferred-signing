@@ -87,7 +87,7 @@ public class DeferredSigning {
 
         // Sign the document using an external container.
         // 8192 is the size of the empty signature placeholder.
-        signer.signExternalContainer(container, 8192);
+        signer.signExternalContainer(container, 2200);
 
         byte[] documentHash = container.getHash();
         String documentHashBase64 = Base64.getEncoder().encodeToString(documentHash);
@@ -107,7 +107,7 @@ public class DeferredSigning {
          * Assinatura digital SHA256-RSA codificada em Base64 na retornada do serviço:
          * https://assinatura-api.staging.iti.br/externo/v2/assinarRaw
          */
-        String assinarRaw = "sFq2PCt5OIrICLEokDv+HrS3hvQPMERlWq/Lx6kipMm6Ti6VMU8vJEv8fd7XeU/7uLXV6z9ezk9HPtGKfMQBQPIzkechTAunbtxaMGSyr+qrxwyytktx4HsyzxcQIdIngMi3uz4PxnArr10bDZKB5WtmMBLoE3dZcNrzcefNkOcSbKSxwH76yImHip27pxAmuYWTSae9DqVEbaBYLjGWSJGflLTzUv2JZPPT4lCmyNxtpM3Q5Lyz5gzMDG9gDcGGsDVaf/0JUNE7VArH/nwR8Co8z3cADTfdstbC5ZcPmpOePSOjO53C6Gd07IQWy8doDQT80knHiXNJAzqXl17LGg==";
+        String assinarRaw = "v6Jg7nA2djxSbt6jVB2W8FXVttBINlbOrmxYxCBatwAeb5J4QLTZ5OJaRmNXCpE99AlkdLrIb5jrIKsNZQ8drnT+CZxOGJCGsGMWlh7slISesgzcdF3Sqgl/RIVniFdmrK1V/7TYqi25scbsHjYPbzJ3sxbH1fFB0vvKRwu/2kpQiLXJO1YlVIxuOGFg8zj8ux1z7rA+4ASn942v/5ABLhUFrb5rrD6qkycxp81NpZRR0ekLWBuyOc3FfY9N5HRg7Ln/KYTNjmKQTi79T1mwrFM6rkqqSgDR6jo9ogPUXUDc3t0C4f0cYf8gviLqTSUI5l2gaAXFCgH5XKjc+W5lVw==";
 
         try (PdfReader reader = new PdfReader(docEmptySign)) {
             try (FileOutputStream os = new FileOutputStream(dest)) {
