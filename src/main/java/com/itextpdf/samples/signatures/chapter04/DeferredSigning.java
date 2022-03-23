@@ -13,7 +13,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -21,7 +20,7 @@ import java.util.Base64;
 
 /**
  * Documentação:
- * https://manual-integracao-assinatura-digital.readthedocs.io/en/2.8/iniciarintegracao.html
+ * https://manual-integracao-assinatura-digital.readthedocs.io/en/latest/iniciarintegracao.html
  *
  * iText7 deferred signed pdf document shows “the document has been altered or corrupted since the signature was applied”
  * https://stackoverflow.com/questions/66099648/itext7-deferred-signed-pdf-document-shows-the-document-has-been-altered-or-corr
@@ -42,7 +41,6 @@ public class DeferredSigning {
      * encryption/response.p7s
      */
     public static final String TEMP = "./src/test/resources/pdfs/doc-empty-sig.pdf";
-    //public static final String TEMP = "./target/signatures/doc-empty-sig.pdf";
 
     /**
      * Certificado PEM recuperado do serviço:
@@ -71,45 +69,6 @@ public class DeferredSigning {
         DeferredSigning app = new DeferredSigning();
         app.emptySignature(SRC, TEMP, "sig", certificate);
         app.signDocument(TEMP, DEST + RESULT_FILES, "sig", certificate);
-    }
-
-    public static String convertPkcs7ToHex(InputStream pkcs7IS) throws IOException {
-
-        final String UNKNOWN_CHARACTER = ".";
-
-        StringBuilder result = new StringBuilder();
-        StringBuilder hex = new StringBuilder();
-        StringBuilder input = new StringBuilder();
-
-        int count = 0;
-        int value;
-
-
-        while ((value = pkcs7IS.read()) != -1) {
-
-            hex.append(String.format("%02X", value));
-
-            //If the character is unable to convert, just prints a dot "."
-            if (!Character.isISOControl(value)) {
-                input.append((char) value);
-            } else {
-                input.append(UNKNOWN_CHARACTER);
-            }
-
-            // After 15 bytes, reset everything for formatting purpose
-            if (count == 14) {
-                result.append(hex);
-                hex.setLength(0);
-                input.setLength(0);
-                count = 0;
-            } else {
-                count++;
-            }
-
-        }
-
-
-        return result.toString();
     }
 
     public void emptySignature(String src, String dest, String fieldname, Certificate[] certificate)
@@ -155,6 +114,45 @@ public class DeferredSigning {
 
     }
 
+    public static String convertPkcs7ToHex(InputStream pkcs7IS) throws IOException {
+
+        final String UNKNOWN_CHARACTER = ".";
+
+        StringBuilder result = new StringBuilder();
+        StringBuilder hex = new StringBuilder();
+        StringBuilder input = new StringBuilder();
+
+        int count = 0;
+        int value;
+
+
+        while ((value = pkcs7IS.read()) != -1) {
+
+            hex.append(String.format("%02X", value));
+
+            //If the character is unable to convert, just prints a dot "."
+            if (!Character.isISOControl(value)) {
+                input.append((char) value);
+            } else {
+                input.append(UNKNOWN_CHARACTER);
+            }
+
+            // After 15 bytes, reset everything for formatting purpose
+            if (count == 14) {
+                result.append(hex);
+                hex.setLength(0);
+                input.setLength(0);
+                count = 0;
+            } else {
+                count++;
+            }
+
+        }
+
+
+        return result.toString();
+    }
+
     class CustomExternalSignature implements IExternalSignatureContainer {
 
         protected byte[] encodedSig;
@@ -193,7 +191,11 @@ public class DeferredSigning {
 
         System.out.println(pkcs7Hex);
 
-        byte[] documentHash = Base64.getDecoder().decode("C0QQYdtCLdPK47yvV1anjvFVhAZamkwEqsqTG83eN7E=");
+        /**
+         * Hash SHA256 codificado em Base64 que foi enviado para o serviço:
+         * https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7
+         */
+        byte[] documentHash = Base64.getDecoder().decode("thBb+H4cyK/oBx/Z7w1Zu0UFz0ue1RZXS2FHiHzuMWM=");
 
         try (PdfReader reader = new PdfReader(docEmptySign)) {
             try (FileOutputStream os = new FileOutputStream(dest)) {
@@ -250,13 +252,10 @@ public class DeferredSigning {
         @Override
         public byte[] sign(InputStream data) throws GeneralSecurityException {
             String hashAlgorithm = "SHA256";
-
-            MessageDigest md = MessageDigest.getInstance("SHA256");
-
             BouncyCastleDigest digest = new BouncyCastleDigest();
 
             try {
-                this.hash = DigestAlgorithms.digest(data, digest.getMessageDigest(md.getAlgorithm()));
+                this.hash = DigestAlgorithms.digest(data, digest.getMessageDigest(hashAlgorithm));
             } catch (IOException e) {
                 throw new GeneralSecurityException("PreSignatureContainer signing exception", e);
             }
