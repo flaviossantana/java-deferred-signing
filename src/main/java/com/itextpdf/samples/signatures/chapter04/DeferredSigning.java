@@ -24,6 +24,7 @@ import java.util.Base64;
  *
  * iText7 deferred signed pdf document shows “the document has been altered or corrupted since the signature was applied”
  * https://stackoverflow.com/questions/66099648/itext7-deferred-signed-pdf-document-shows-the-document-has-been-altered-or-corr
+ * https://stackoverflow.com/questions/67889692/java-itext7-deferred-with-sign-prefix-producing-invalid-signed-pdf
  *
  * Convert File to Hex:
  * https://mkyong.com/java/how-to-convert-file-to-hex-in-java/
@@ -67,7 +68,7 @@ public class DeferredSigning {
         Certificate[] certificate = new Certificate[]{cf.generateCertificate(certificadoPem)};
 
         DeferredSigning app = new DeferredSigning();
-        app.emptySignature(SRC, TEMP, "sig", certificate);
+//      app.emptySignature(SRC, TEMP, "sig", certificate);
         app.signDocument(TEMP, DEST + RESULT_FILES, "sig", certificate);
     }
 
