@@ -114,62 +114,6 @@ public class DeferredSigning {
 
     }
 
-    public static String convertPkcs7ToHex(InputStream pkcs7IS) throws IOException {
-
-        final String UNKNOWN_CHARACTER = ".";
-
-        StringBuilder result = new StringBuilder();
-        StringBuilder hex = new StringBuilder();
-        StringBuilder input = new StringBuilder();
-
-        int count = 0;
-        int value;
-
-
-        while ((value = pkcs7IS.read()) != -1) {
-
-            hex.append(String.format("%02X", value));
-
-            //If the character is unable to convert, just prints a dot "."
-            if (!Character.isISOControl(value)) {
-                input.append((char) value);
-            } else {
-                input.append(UNKNOWN_CHARACTER);
-            }
-
-            // After 15 bytes, reset everything for formatting purpose
-            if (count == 14) {
-                result.append(hex);
-                hex.setLength(0);
-                input.setLength(0);
-                count = 0;
-            } else {
-                count++;
-            }
-
-        }
-
-
-        return result.toString();
-    }
-
-    class CustomExternalSignature implements IExternalSignatureContainer {
-
-        protected byte[] encodedSig;
-
-        public CustomExternalSignature(byte[] encodedSig) {
-            this.encodedSig = encodedSig;
-        }
-
-        public byte[] sign(InputStream is) {
-            return this.encodedSig;
-        }
-
-        public void modifySigningDictionary(PdfDictionary signDic) {
-            // Do nothing because of X and Y.
-        }
-    }
-
     public void signDocument(
             String docEmptySign,
             String dest,
@@ -237,6 +181,62 @@ public class DeferredSigning {
             }
         }
 
+    }
+
+    public static String convertPkcs7ToHex(InputStream pkcs7IS) throws IOException {
+
+        final String UNKNOWN_CHARACTER = ".";
+
+        StringBuilder result = new StringBuilder();
+        StringBuilder hex = new StringBuilder();
+        StringBuilder input = new StringBuilder();
+
+        int count = 0;
+        int value;
+
+
+        while ((value = pkcs7IS.read()) != -1) {
+
+            hex.append(String.format("%02X", value));
+
+            //If the character is unable to convert, just prints a dot "."
+            if (!Character.isISOControl(value)) {
+                input.append((char) value);
+            } else {
+                input.append(UNKNOWN_CHARACTER);
+            }
+
+            // After 15 bytes, reset everything for formatting purpose
+            if (count == 14) {
+                result.append(hex);
+                hex.setLength(0);
+                input.setLength(0);
+                count = 0;
+            } else {
+                count++;
+            }
+
+        }
+
+
+        return result.toString();
+    }
+
+    class CustomExternalSignature implements IExternalSignatureContainer {
+
+        protected byte[] encodedSig;
+
+        public CustomExternalSignature(byte[] encodedSig) {
+            this.encodedSig = encodedSig;
+        }
+
+        public byte[] sign(InputStream is) {
+            return this.encodedSig;
+        }
+
+        public void modifySigningDictionary(PdfDictionary signDic) {
+            // Do nothing because of X and Y.
+        }
     }
 
     public class PreSignatureContainer implements IExternalSignatureContainer {
