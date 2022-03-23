@@ -34,7 +34,6 @@ public class DeferredSigning {
 
     public static final String DEST = "./target/signatures/";
     public static final String RESULT_FILES = "doc-sig-ok.pdf";
-    //    public static final String TEMP = "./target/signatures/doc-empty-sig.pdf";
     public static final String SRC = "./src/test/resources/pdfs/doc-blank.pdf";
 
     /**
@@ -43,6 +42,7 @@ public class DeferredSigning {
      * encryption/response.p7s
      */
     public static final String TEMP = "./src/test/resources/pdfs/doc-empty-sig.pdf";
+    //public static final String TEMP = "./target/signatures/doc-empty-sig.pdf";
 
     /**
      * Certificado PEM recuperado do serviço:
@@ -69,7 +69,7 @@ public class DeferredSigning {
         Certificate[] certificate = new Certificate[]{cf.generateCertificate(certificadoPem)};
 
         DeferredSigning app = new DeferredSigning();
-//        app.emptySignature(SRC, TEMP, "sig", certificate);
+        app.emptySignature(SRC, TEMP, "sig", certificate);
         app.signDocument(TEMP, DEST + RESULT_FILES, "sig", certificate);
     }
 
