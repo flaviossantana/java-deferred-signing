@@ -24,17 +24,24 @@ import java.util.logging.Logger;
 
 public class AssinaturaAvancadaGovbr {
 
-    private static final Logger LOGGER = Logger.getLogger(AssinaturaAvancadaGovbr.class.getName());
+    /**
+     * Geração do Access Token:
+     * O método retorno o "access_token" do serviço de autenticação
+     * https://cas.staging.iti.br/oauth2.0
+     */
+    private static final String ACCESS_TOKEN = "Bearer AT-361-60C7rRNs7PE4rwil-s5h5fAhdlS0PXDQ";
 
     private static final String SRC = "./src/test/resources/pdfs/doc-blank.pdf";
-    private static final String RESULT_FILES = "./target/signatures/doc-sig-ok.pdf";
+    private static final String RESULT_FILES = "./target/doc-sig-ok.pdf";
+
+    private static final Logger LOGGER = Logger.getLogger(AssinaturaAvancadaGovbr.class.getName());
 
     public static void main(String[] args) {
         new AssinaturaAvancadaGovbr()
                 .embutirAssinatura(
                         SRC,
                         RESULT_FILES,
-                        "XUXU"
+                        "assinatura"
                 );
     }
 
@@ -53,9 +60,7 @@ public class AssinaturaAvancadaGovbr {
                         .setPageNumber(1);
 
                 pdfSigner.setFieldName(nomeCampoAssinatura);
-
                 SignatureContainer signatureContainer = new SignatureContainer();
-
                 pdfSigner.signExternalContainer(signatureContainer, 8192);
             }
         } catch (IOException ioe) {
@@ -65,6 +70,28 @@ public class AssinaturaAvancadaGovbr {
         }
     }
 
+    /**
+     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256.
+     */
+    private static String hashSHA256(InputStream data) throws GeneralSecurityException, IOException {
+        String hashAlgorithm = "SHA256";
+        BouncyCastleDigest digest = new BouncyCastleDigest();
+        byte[] documentHash = DigestAlgorithms.digest(data, digest.getMessageDigest(hashAlgorithm));
+        return Base64.getEncoder().encodeToString(documentHash);
+    }
+
+    /**
+     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256
+     * utilizando a chave privada do usuário, deve-se fazer uma requisição HTTP POST
+     * para o endereço https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7
+     */
+    private static CloseableHttpResponse assinarPKCS7(CloseableHttpClient httpclient, InputStream data) throws IOException, GeneralSecurityException {
+        HttpPost post = new HttpPost("https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7");
+        post.setEntity(new StringEntity("{\"hashBase64\": \"" + hashSHA256(data) + "\"}", ContentType.APPLICATION_JSON));
+        post.addHeader("Content-Type", "application/json");
+        post.addHeader("Authorization", ACCESS_TOKEN);
+        return httpclient.execute(post);
+    }
 
     public class SignatureContainer implements IExternalSignatureContainer {
 
@@ -74,22 +101,9 @@ public class AssinaturaAvancadaGovbr {
 
         @Override
         public byte[] sign(InputStream data) {
-
             try {
-
-                String hashAlgorithm = "SHA256";
-                BouncyCastleDigest digest = new BouncyCastleDigest();
-                byte[] documentHash = DigestAlgorithms.digest(data, digest.getMessageDigest(hashAlgorithm));
-                String documentHashBase64 = Base64.getEncoder().encodeToString(documentHash);
-
                 try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-
-                    HttpPost post = new HttpPost("https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7");
-                    post.setEntity(new StringEntity("{\"hashBase64\": \"" + documentHashBase64 + "\"}", ContentType.APPLICATION_JSON));
-                    post.addHeader("Content-Type", "application/json");
-                    post.addHeader("Authorization", "Bearer AT-352-nxh-XnIOaMxYL1WFFluhZwLfy5czbET7");
-
-                    try (CloseableHttpResponse response = httpclient.execute(post)) {
+                    try (CloseableHttpResponse response = assinarPKCS7(httpclient, data)) {
 
                         HttpEntity entity = response.getEntity();
 
@@ -98,7 +112,6 @@ public class AssinaturaAvancadaGovbr {
                         inputStream.read(targetArray);
 
                         return targetArray;
-
                     }
                 }
             } catch (IOException ioe) {
