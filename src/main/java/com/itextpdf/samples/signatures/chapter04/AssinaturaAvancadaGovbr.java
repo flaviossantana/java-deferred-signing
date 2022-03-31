@@ -70,29 +70,6 @@ public class AssinaturaAvancadaGovbr {
         }
     }
 
-    /**
-     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256.
-     */
-    private static String hashSHA256(InputStream data) throws GeneralSecurityException, IOException {
-        String hashAlgorithm = "SHA256";
-        BouncyCastleDigest digest = new BouncyCastleDigest();
-        byte[] documentHash = DigestAlgorithms.digest(data, digest.getMessageDigest(hashAlgorithm));
-        return Base64.getEncoder().encodeToString(documentHash);
-    }
-
-    /**
-     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256
-     * utilizando a chave privada do usuário, deve-se fazer uma requisição HTTP POST
-     * para o endereço https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7
-     */
-    private static CloseableHttpResponse assinarPKCS7(CloseableHttpClient httpclient, InputStream data) throws IOException, GeneralSecurityException {
-        HttpPost post = new HttpPost("https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7");
-        post.setEntity(new StringEntity("{\"hashBase64\": \"" + hashSHA256(data) + "\"}", ContentType.APPLICATION_JSON));
-        post.addHeader("Content-Type", "application/json");
-        post.addHeader("Authorization", ACCESS_TOKEN);
-        return httpclient.execute(post);
-    }
-
     public class SignatureContainer implements IExternalSignatureContainer {
 
         private SignatureContainer() {
@@ -130,6 +107,29 @@ public class AssinaturaAvancadaGovbr {
             pdfDictionary.put(PdfName.SubFilter, PdfName.Adbe_pkcs7_detached);
 
         }
+    }
+
+    /**
+     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256.
+     */
+    private static String hashSHA256(InputStream data) throws GeneralSecurityException, IOException {
+        String hashAlgorithm = "SHA256";
+        BouncyCastleDigest digest = new BouncyCastleDigest();
+        byte[] documentHash = DigestAlgorithms.digest(data, digest.getMessageDigest(hashAlgorithm));
+        return Base64.getEncoder().encodeToString(documentHash);
+    }
+
+    /**
+     * Para gerar um pacote PKCS#7 contendo a assinatura digital de um HASH SHA-256
+     * utilizando a chave privada do usuário, deve-se fazer uma requisição HTTP POST
+     * para o endereço https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7
+     */
+    private static CloseableHttpResponse assinarPKCS7(CloseableHttpClient httpclient, InputStream data) throws IOException, GeneralSecurityException {
+        HttpPost post = new HttpPost("https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7");
+        post.setEntity(new StringEntity("{\"hashBase64\": \"" + hashSHA256(data) + "\"}", ContentType.APPLICATION_JSON));
+        post.addHeader("Content-Type", "application/json");
+        post.addHeader("Authorization", ACCESS_TOKEN);
+        return httpclient.execute(post);
     }
 
 }
