@@ -68,7 +68,7 @@ public class DeferredSigning {
         Certificate[] certificate = new Certificate[]{cf.generateCertificate(certificadoPem)};
 
         DeferredSigning app = new DeferredSigning();
-//      app.emptySignature(SRC, TEMP, "sig", certificate);
+        app.emptySignature(SRC, TEMP, "sig", certificate);
         app.signDocument(TEMP, DEST + RESULT_FILES, "sig", certificate);
     }
 
@@ -140,7 +140,7 @@ public class DeferredSigning {
          * Hash SHA256 codificado em Base64 que foi enviado para o serviço:
          * https://assinatura-api.staging.iti.br/externo/v2/assinarPKCS7
          */
-        byte[] documentHash = Base64.getDecoder().decode("thBb+H4cyK/oBx/Z7w1Zu0UFz0ue1RZXS2FHiHzuMWM=");
+        byte[] documentHash = Base64.getDecoder().decode("u7F1xGhdOB4Dr21pn/jNQI/dyKeIVHtxBpHRmNuszgc=");
 
         try (PdfReader reader = new PdfReader(docEmptySign)) {
             try (FileOutputStream os = new FileOutputStream(dest)) {
